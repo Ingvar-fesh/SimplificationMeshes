@@ -43,3 +43,10 @@ C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpDX.Mathematics.pdb
 C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpDX.Mathematics.xml
 C:\Users\Igor7\Desktop\Meshes\Meshes\obj\Debug\Window1.baml
 C:\Users\Igor7\Desktop\Meshes\Meshes\obj\Debug\Window1.g.cs
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpGL.dll
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpGL.SceneGraph.dll
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpGL.WPF.dll
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\System.Drawing.Common.dll
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpGL.xml
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpGL.SceneGraph.xml
+C:\Users\Igor7\Desktop\Meshes\Meshes\bin\Debug\SharpGL.WPF.xml
