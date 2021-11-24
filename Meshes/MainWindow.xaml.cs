@@ -13,8 +13,9 @@ namespace Display3DModel
 
         string MODEL_PATH;
         ModelVisual3D device3D = new ModelVisual3D();
+        ModelVisual3D device3D2 = new ModelVisual3D();
 
-        
+
         /*
          * Данный метод получает путь к объекту
          */
@@ -35,7 +36,7 @@ namespace Display3DModel
             MODEL_PATH = GetPath();
             if (viewPort3d.Children.Contains(device3D))
                 viewPort3d.Children.Remove(device3D);
-            device3D.Content = Display3d(MODEL_PATH);
+            device3D.Content = Display3d(MODEL_PATH, viewPort3d);
             // Add to view port
             viewPort3d.Children.Add(device3D);
         }
@@ -47,8 +48,10 @@ namespace Display3DModel
         private void buttonAlgorithm_Click(object sender, RoutedEventArgs e)
         {
             SimpleAlg alg = new SimpleAlg();
-            var newWin = new Window1(alg.cubeAlg(MODEL_PATH));
-            newWin.Show();
+            if (viewPort.Children.Contains(device3D2))
+                viewPort.Children.Remove(device3D2);
+            device3D2.Content = Display3d(alg.cubeAlg(MODEL_PATH), viewPort);
+            viewPort.Children.Add(device3D2);
         }
             
         /*
@@ -67,12 +70,12 @@ namespace Display3DModel
         /*
          * Данный метод загружает модель по передаваемому пути
          */
-        private Model3D Display3d(String model)
+        private Model3D Display3d(String model, HelixViewport3D viewport)
         {
             Model3D device = null;
             try
             {
-                viewPort3d.RotateGesture = new MouseGesture(MouseAction.LeftClick);
+                viewport.RotateGesture = new MouseGesture(MouseAction.LeftClick);
                 ModelImporter import = new ModelImporter();
                 device = import.Load(model);
             }
