@@ -1,19 +1,17 @@
-namespace PLY.Types {
-    public class Vertex<Type> where Type : new(){
-            public Type X;
-            public Type Y;
-            public Type Z;
+namespace MeshSimplification.Types {
+    public class Vertex {
+        private double x;
+        private double y;
+        private double z;
 
-            public Vertex(Type x, Type y, Type z) {
-                X = x;
-                Y = y;
-                Z = z;
-            }
-            
-            public Vertex() {
-                X = new Type();
-                Y = new Type();
-                Z = new Type();
-            }
+        public Vertex(double x, double y, double z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
         }
+        
+        public double X { get { return x; } }
+        public double Y { get { return y; } }
+        public double Z { get { return z; } }
+    }
 }

@@ -1,15 +1,15 @@
-namespace PLY.Types {
+namespace MeshSimplification.Types {
     public class Edge {
-        public int Vertex1;
-        public int Vertex2;
+        private int vertex1;
+        private int vertex2;
 
         public Edge(int vertex1, int vertex2) {
-            Vertex1 = vertex1;
-            Vertex2 = vertex2;
+            this.vertex1 = vertex1;
+            this.vertex2 = vertex2;
         }
-        public Edge() {
-            Vertex1 = new int();
-            Vertex2 = new int();
-        }
+        
+        public int Vertex1 { get { return vertex1; } }
+        
+        public int Vertex2 { get { return vertex2; } }
     }
 }

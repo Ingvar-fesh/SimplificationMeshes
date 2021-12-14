@@ -4,9 +4,13 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media.Media3D;
 using Microsoft.Win32;
-using PLY;
-using PLY.Types;
 using System.Threading;
+using MeshSimplification.Algorithms;
+using MeshSimplification.Readers.Importer;
+using MeshSimplification.Readers.Exporter;
+using MeshSimplification.Types;
+using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace Display3DModel
 {
@@ -16,6 +20,14 @@ namespace Display3DModel
         string MODEL_PATH;
         ModelVisual3D device3D = new ModelVisual3D();
         ModelVisual3D device3D2 = new ModelVisual3D();
+
+
+        public MainWindow()
+        {
+            Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            InitializeComponent();
+
+        }
 
 
         /*
@@ -38,8 +50,29 @@ namespace Display3DModel
             MODEL_PATH = GetPath();
             if (viewPort3d.Children.Contains(device3D))
                 viewPort3d.Children.Remove(device3D);
+
+            ImporterPly pf3 = new ImporterPly();
+            Model figure = pf3.Import(MODEL_PATH);
+
+            if (firstText.Text.Length > 0)
+                firstText.Text = firstText.Text.Remove(0);
+
+
+            int countVertex = 0;
+            int countFace = 0;
+            for (int i = 0; i < figure.Meshes.Count; ++i)
+            {
+                countVertex += figure.Meshes[i].Vertices.Count;
+                countFace += figure.Meshes[i].Faces.Count;
+            }
+
+            String lines = "\tDetails: \n";
+            String firstResult = "\tCount vertexes: " + countVertex + "\n";
+            String thirdResult = "\tCount faces: " + countFace + "\n";
+            firstText.Text = lines + firstResult + thirdResult;
+
+
             device3D.Content = Display3d(MODEL_PATH, viewPort3d);
-            // Add to view port
             viewPort3d.Children.Add(device3D);
         }
 
@@ -49,25 +82,56 @@ namespace Display3DModel
          */
         private void buttonAlgorithm_Click(object sender, RoutedEventArgs e)
         {
-            BoundBox_AABB algorithm = new BoundBox_AABB();
-            PLYFormat pf3 = new PLYFormat();
-            Model figure = pf3.Reader(MODEL_PATH);
+            BoundBoxAABB algorithm = new BoundBoxAABB();
+            ImporterPly pf3 = new ImporterPly();
+            ExporterPly pf32 = new ExporterPly();
+
+            Model figure = pf3.Import(MODEL_PATH);
             Model result = algorithm.Simplify(figure);
             if (viewPort.Children.Contains(device3D2))
                 viewPort.Children.Remove(device3D2);
-            device3D2.Content = Display3d(pf3.Writer(MODEL_PATH, result), viewPort);
+
+            secondText.Text = printResult(result);
+
+            pf32.Export(MODEL_PATH, result, false, false);
+            device3D2.Content = Display3d(MODEL_PATH.Insert(MODEL_PATH.LastIndexOf(".", StringComparison.Ordinal), "_simplified"), viewPort);
             viewPort.Children.Add(device3D2);
         }
 
         private void buttonAlgorithm_Click2(object sender, RoutedEventArgs e)
         {
             EdgeContraction algorithm = new EdgeContraction();
-            PLYFormat pf3 = new PLYFormat();
-            Model figure = pf3.Reader(MODEL_PATH);
+            ImporterPly pf3 = new ImporterPly();
+            ExporterPly pf32 = new ExporterPly();
+            Model figure = pf3.Import(MODEL_PATH);
             Model result = algorithm.Simplify(figure, 0.1);
             if (viewPort.Children.Contains(device3D2))
                 viewPort.Children.Remove(device3D2);
-            device3D2.Content = Display3d(pf3.Writer(MODEL_PATH, result), viewPort);
+
+            if (secondText.Text.Length > 0)
+                secondText.Text = secondText.Text.Remove(0);
+
+            secondText.Text = printResult(result);
+
+            pf32.Export(MODEL_PATH, result, false, false);
+            device3D2.Content = Display3d(MODEL_PATH.Insert(MODEL_PATH.LastIndexOf(".", StringComparison.Ordinal), "_simplified"), viewPort);
+            viewPort.Children.Add(device3D2);
+        }
+
+        private void buttonAlgorithm_Click3(object sender, RoutedEventArgs e)
+        {
+            FaceContraction algorithm = new FaceContraction();
+            ImporterPly pf3 = new ImporterPly();
+            ExporterPly pf32 = new ExporterPly();
+            Model figure = pf3.Import(MODEL_PATH);
+            Model result = algorithm.Simplify(figure, 0.05);
+            if (viewPort.Children.Contains(device3D2))
+                viewPort.Children.Remove(device3D2);
+
+            secondText.Text = printResult(result);
+
+            pf32.Export(MODEL_PATH, result, false, false);
+            device3D2.Content = Display3d(MODEL_PATH.Insert(MODEL_PATH.LastIndexOf(".", StringComparison.Ordinal), "_simplified"), viewPort);
             viewPort.Children.Add(device3D2);
         }
 
@@ -79,12 +143,6 @@ namespace Display3DModel
             this.Close();
         }
 
-        public MainWindow()
-        {
-            Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
-            InitializeComponent();
-            
-        }
 
         /*
          * Данный метод загружает модель по передаваемому пути
@@ -94,8 +152,10 @@ namespace Display3DModel
             Model3D device = null;
             try
             {
+                Material material = new DiffuseMaterial(new SolidColorBrush(Colors.Beige));
                 viewport.RotateGesture = new MouseGesture(MouseAction.LeftClick);
                 ModelImporter import = new ModelImporter();
+                import.DefaultMaterial = material;
                 device = import.Load(model);
             }
             catch (Exception e)
@@ -105,5 +165,21 @@ namespace Display3DModel
             return device;
         }
 
+        private String printResult(Model model)
+        {
+            int countVertex = 0;
+            int countFace = 0;
+            for (int i = 0; i < model.Meshes.Count; ++i)
+            {
+                countVertex += model.Meshes[i].Vertices.Count;
+                countFace += model.Meshes[i].Faces.Count;
+            }
+
+            String lines = "\tDetails: \n";
+            String firstResult = "\tCount vertexes: " + countVertex + "\n";
+            String thirdResult = "\tCount faces: " + countFace + "\n";
+
+            return lines + firstResult + thirdResult;
+        }
     }
 }

@@ -1,64 +1,92 @@
-//переписать нормально
+// переписать нормально
 
 using System;
 using System.Collections.Generic;
-using PLY.Types;
+using MeshSimplification.Types;
+using SharpDX;
 
-namespace PLY
+namespace MeshSimplification.Algorithms
 {
     public class EdgeContraction
     {
-        public Model Simplify(Model model, double koef)
+        public Model Simplify(Model model, double ratio)
         {
-            List<Edge> edges = GetEdges(model);
-            double longest = FindLongestEdge(model, edges);
-            Model deletedEdges = DeleteEdge(model, edges, koef, longest);
-            return deletedEdges;
+            Model modelNew = new Model();
+
+            foreach (Mesh mesh in model.Meshes)
+            {
+                Mesh simple = new Mesh(new List<Vertex>(mesh.Vertices), new List<Vertex>(mesh.Normals),
+                    new List<Face>(mesh.Faces), new List<Edge>(mesh.Edges));
+                modelNew.AddMesh(SimplifyMesh(simple, ratio));
+            }
+            /*
+             * UPD:
+             * добавил такую конструкцию т.к. иначе он каким-то чудом меняет
+             * первоначальную модель т.е. он имеет внутри доступ к сеткам начальной модели
+             */
+            //return model;
+
+            return modelNew;
+        }
+
+        private Mesh SimplifyMesh(Mesh mesh, double ratio)
+        {
+            List<Edge> edges = GetEdges(mesh);
+           
+            double longest = FindLongestEdge(mesh, edges);
+            Mesh deleteEdges = DeleteEdge(mesh, edges, ratio, longest);
+
+            return deleteEdges;
+        }
+
+        private static List<Edge> GetEdges(Mesh mesh)
+        {
+            List<Edge> answer = new List<Edge>();
+
+            foreach (Face f in mesh.Faces)
+            {
+                if (!IfEdge(new Edge(f.Vertices[0], f.Vertices[1]), answer))
+                    answer.Add(new Edge(f.Vertices[0], f.Vertices[1]));
+                if (!IfEdge(new Edge(f.Vertices[0], f.Vertices[2]), answer))
+                    answer.Add(new Edge(f.Vertices[0], f.Vertices[2]));
+                if (!IfEdge(new Edge(f.Vertices[1], f.Vertices[2]), answer))
+                    answer.Add(new Edge(f.Vertices[1], f.Vertices[2]));
+            }
+
+            return answer;
         }
 
         private static bool IfEdge(Edge edge, List<Edge> edges)
         {
-            return edges.Exists(x => ((x.Vertex1 == edge.Vertex1 && x.Vertex2 == edge.Vertex2) ||
-                   (x.Vertex1 == edge.Vertex2 && x.Vertex2 == edge.Vertex1)));
+            return edges.Exists(x =>
+                x.Vertex1 == edge.Vertex1 && x.Vertex2 == edge.Vertex2 ||
+                 x.Vertex1 == edge.Vertex2 && x.Vertex2 == edge.Vertex1);
         }
 
-        private static List<Edge> GetEdges(Model model)
-        {
-            List<Edge> answer = new List<Edge>();
-            foreach (Face face in model.Faces)
-            {
-                if (!IfEdge(new Edge(face.Vertices[0], face.Vertices[1]), answer))
-                    answer.Add(new Edge(face.Vertices[0], face.Vertices[1]));
-                if (!IfEdge(new Edge(face.Vertices[0], face.Vertices[2]), answer))
-                    answer.Add(new Edge(face.Vertices[0], face.Vertices[2]));
-                if (!IfEdge(new Edge(face.Vertices[1], face.Vertices[2]), answer))
-                    answer.Add(new Edge(face.Vertices[1], face.Vertices[2]));
-            }
-            return answer;
-        }
-
-        private static double FindLongestEdge(Model model, List<Edge> edges)
+        private static double FindLongestEdge(Mesh mesh, List<Edge> edges)
         {
             double maxLength = double.MinValue;
-            double current;
 
             foreach (Edge edge in edges)
             {
-                current = EdgeLength(model, edge);
+                double current = EdgeLength(mesh, edge);
                 maxLength = current > maxLength ? current : maxLength;
             }
+
             return maxLength;
         }
 
-        private static double EdgeLength(Model model, Edge edge)
+        private static double EdgeLength(Mesh mesh, Edge edge)
         {
-            double x1, x2, y1, y2, z1, z2;
-            x1 = model.Vertices[edge.Vertex1].X;
-            x2 = model.Vertices[edge.Vertex2].X;
-            y1 = model.Vertices[edge.Vertex1].Y;
-            y2 = model.Vertices[edge.Vertex2].Y;
-            z1 = model.Vertices[edge.Vertex1].Z;
-            z2 = model.Vertices[edge.Vertex2].Z;
+            double x1 = mesh.Vertices[edge.Vertex1].X;
+            double x2 = mesh.Vertices[edge.Vertex2].X;
+
+            double y1 = mesh.Vertices[edge.Vertex1].Y;
+            double y2 = mesh.Vertices[edge.Vertex2].Y;
+
+            double z1 = mesh.Vertices[edge.Vertex1].Z;
+            double z2 = mesh.Vertices[edge.Vertex2].Z;
+
             return Math.Sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1) + (z2 - z1) * (z2 - z1));
         }
 
@@ -68,52 +96,74 @@ namespace PLY
                    face.Vertices.Exists(x => x == edge.Vertex2);
         }
 
-        private static Model DeleteEdge(Model model, List<Edge> edges, double koef, double longest)
+        private static Mesh DeleteEdge(Mesh mesh, List<Edge> edges, double ratio, double longest)
         {
-            List<Vertex<double>> vertices = model.Vertices;
-            List<Face> faces = model.Faces;
-            Vertex<double> v1, v2;
-            int before = model.Faces.Count;
+            List<Vertex> vertices = mesh.Vertices;
+            List<Face> faces = mesh.Faces;
+            int before = mesh.Faces.Count;
             int v1Index, v2Index;
 
+            /*
+             * UPD:
+             * идея на данный момент чтобы не потерять измененные вместе вершины мы точно знаем
+             * что у них одинаковые координаты и теперь чтобы при изменении одной вершины
+             * попутно менялись вершины которые ранее были связаны с ней мы можем
+             * пробегаться по массиву вершин и смотреть если у них одинаковые значения
+             * значит меняем их
+             *
+             * но на некоторых моделях он снова создает разрывы объяснения этому
+             * я не могу найти никак ведь с кроликом где очень много вершин
+             * никаких новых разрывов не появляется единственное что может
+             * произойти это старые разрывы могут увеличиться или сместиться
+            */
+            //List<int> simplified = new List<int>();
 
-            List<int> simplified = new List<int>();
             foreach (Edge edge in edges)
             {
-                if (EdgeLength(model, edge) < koef * longest)
+                if (EdgeLength(mesh, edge) < ratio * longest)
                 {
                     v1Index = edge.Vertex1;
                     v2Index = edge.Vertex2;
 
+                    /*
                     if (simplified.Exists(x => x == v1Index || x == v2Index))
                         continue;
+                    simplified.Add(v1Index);
+                    simplified.Add(v2Index);
+                    */
 
-                    v1 = vertices[v1Index];
-                    v2 = vertices[v2Index];
+
+                    Vertex v1 = vertices[v1Index];
+                    Vertex v2 = vertices[v2Index];
 
                     //vertices.Remove(v1);
                     //vertices.Remove(v2);
 
-                    Vertex<double> newVert = new Vertex<double>((v1.X + v2.X) / 2,
+                    Vertex newVert = new Vertex((v1.X + v2.X) / 2,
                         (v1.Y + v2.Y) / 2, (v1.Z + v2.Z) / 2);
 
-                    vertices[v1Index] = newVert;
-                    vertices[v2Index] = newVert;
+                    for (int iter = 0; iter < vertices.Count; iter++)
+                        if (vertices[iter].Equals(v1) || vertices[iter].Equals(v2))
+                            vertices[iter] = newVert;
 
-                    simplified.Add(v1Index);
-                    simplified.Add(v2Index);
+                    //vertices[v1Index] = newVert;
+                    //vertices[v2Index] = newVert;
+
                     faces.RemoveAll(x => EdgeInFace(edge, x));
                 }
             }
+
+
             Console.WriteLine("Stat:");
             Console.WriteLine("faces before: {0}", before);
             Console.WriteLine("faces after: {0}", faces.Count);
-            Console.WriteLine("percentage of faces remaining: {0}", (double)faces.Count / before);
-
-            return new Model(faces, new List<Edge>(), vertices);
+            Console.WriteLine("percentage of faces remaining: {0:F5}", (double)faces.Count / before);
+           
+            return new Mesh(vertices, new List<Vertex>(), faces, new List<Edge>());
         }
     }
 }
+
 /*
  * проблемы алгоритма на данный момент
  * 1. удаляются только ребра и грани в которых есть эти ребра, не удаляются ненужные вершины

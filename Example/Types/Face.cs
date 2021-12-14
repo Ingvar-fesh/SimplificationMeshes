@@ -1,18 +1,17 @@
 using System.Collections.Generic;
 
-namespace PLY.Types {
+namespace MeshSimplification.Types {
     public class Face {
-        public int Count;
-        public List<int> Vertices;
+        private int count;
+        readonly List<int> vertices;
 
         public Face(int count, List<int> vertices) {
-            Count = count;
-            Vertices = vertices;
+            this.count = count;
+            this.vertices = vertices;
         }
+
+        public int Count { get { return count; } }
         
-        public Face() {
-            Count = new int();
-            Vertices = new List<int>();
-        }
+        public List<int> Vertices { get { return vertices; } }
     }
 }
