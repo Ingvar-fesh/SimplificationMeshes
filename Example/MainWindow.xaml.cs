@@ -10,7 +10,7 @@ using MeshSimplification.Readers.Importer;
 using MeshSimplification.Readers.Exporter;
 using MeshSimplification.Types;
 using System.Windows.Media;
-using System.Windows.Controls;
+using Example;
 
 namespace Display3DModel
 {
@@ -85,7 +85,8 @@ namespace Display3DModel
             BoundBoxAABB algorithm = new BoundBoxAABB();
             ImporterPly pf3 = new ImporterPly();
             ExporterPly pf32 = new ExporterPly();
-
+            
+            
             Model figure = pf3.Import(MODEL_PATH);
             Model result = algorithm.Simplify(figure);
             if (viewPort.Children.Contains(device3D2))
@@ -104,7 +105,10 @@ namespace Display3DModel
             ImporterPly pf3 = new ImporterPly();
             ExporterPly pf32 = new ExporterPly();
             Model figure = pf3.Import(MODEL_PATH);
-            Model result = algorithm.Simplify(figure, 0.1);
+
+            double coef = writeCoefficient();
+
+            Model result = algorithm.Simplify(figure, coef);
             if (viewPort.Children.Contains(device3D2))
                 viewPort.Children.Remove(device3D2);
 
@@ -124,7 +128,30 @@ namespace Display3DModel
             ImporterPly pf3 = new ImporterPly();
             ExporterPly pf32 = new ExporterPly();
             Model figure = pf3.Import(MODEL_PATH);
-            Model result = algorithm.Simplify(figure, 0.05);
+
+            double coef = writeCoefficient();
+            Model result = algorithm.Simplify(figure, coef);
+
+            if (viewPort.Children.Contains(device3D2))
+                viewPort.Children.Remove(device3D2);
+
+            secondText.Text = printResult(result);
+
+            pf32.Export(MODEL_PATH, result, false, false);
+            device3D2.Content = Display3d(MODEL_PATH.Insert(MODEL_PATH.LastIndexOf(".", StringComparison.Ordinal), "_simplified"), viewPort);
+            viewPort.Children.Add(device3D2);
+        }
+
+        private void buttonAlgorithm_Click4(object sender, RoutedEventArgs e)
+        {
+            NewAlgorithm algorithm = new NewAlgorithm();
+            ImporterPly pf3 = new ImporterPly();
+            ExporterPly pf32 = new ExporterPly();
+
+
+            Model figure = pf3.Import(MODEL_PATH);
+            double coef = writeCoefficient();
+            Model result = algorithm.Simplify(figure, coef);
             if (viewPort.Children.Contains(device3D2))
                 viewPort.Children.Remove(device3D2);
 
@@ -165,6 +192,7 @@ namespace Display3DModel
             return device;
         }
 
+        
         private String printResult(Model model)
         {
             int countVertex = 0;
@@ -180,6 +208,26 @@ namespace Display3DModel
             String thirdResult = "\tCount faces: " + countFace + "\n";
 
             return lines + firstResult + thirdResult;
+        }
+
+        private double writeCoefficient()
+        {
+            double coef = 0.0;
+            DialogWindow window = new DialogWindow();
+            if (window.ShowDialog() == true)
+            {
+                if (!double.TryParse(window.Coefficient, out coef))
+                {
+                    MessageBox.Show("Wrong coefficient");
+                    writeCoefficient();
+                }
+                if (coef < 0 || coef > 1)
+                {
+                    MessageBox.Show("Wrong coefficient");
+                    writeCoefficient();
+                }
+            }
+            return coef;
         }
     }
 }

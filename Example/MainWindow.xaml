@@ -69,7 +69,7 @@
 
 
         <Expander Header="Algorithms" Width="116" Grid.Column="2" Margin="0,121,0,0" HorizontalAlignment="Center" VerticalAlignment="Top" Height="170">
-            <StackPanel>
+            <StackPanel Margin="0,0,0,-49">
                 <Button x:Name = "button3"
                 Background="BurlyWood"
                 Click = "buttonAlgorithm_Click"
@@ -102,6 +102,18 @@
                 Margin="0, 5, 1, 5"
                 Width = "94"  
                 IsDefault= "True"
+                Foreground = "Black"
+                Height="36"/>
+                <Button x:Name = "button6"
+                Background="BurlyWood"
+                Click = "buttonAlgorithm_Click4"
+                Margin="0,5"
+                ClickMode = "Press" 
+                Content = "New algorithm"
+                Width = "94"  
+                IsDefault= "True"
+                HorizontalAlignment = "Center"
+                VerticalAlignment ="Top"
                 Foreground = "Black"
                 Height="36"/>
             </StackPanel>

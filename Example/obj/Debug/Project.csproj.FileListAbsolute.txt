@@ -42,3 +42,5 @@ C:\Users\Terminator\Desktop\Example\Example\obj\Debug\Example.pdb
 C:\Users\Terminator\Desktop\Example\Example\obj\Debug\MainWindow.baml
 C:\Users\Terminator\Desktop\Example\Example\obj\Debug\MainWindow.g.cs
 C:\Users\Terminator\Desktop\Example\Example\obj\Debug\Example.g.resources
+C:\Users\Terminator\Desktop\Example\Example\obj\Debug\Window2.baml
+C:\Users\Terminator\Desktop\Example\Example\obj\Debug\Window2.g.cs
